@@ -60,14 +60,14 @@ func (c *Camera) Update() {
 	_, scrollY := ebiten.Wheel()
 	if scrollY != 0 {
 		// Zoom in/out by 10% per scroll
-		zoomFactor := 1.0 + scrollY*0.1
+		zoomFactor := 1.0 + scrollY*0.05
 		c.Zoom *= zoomFactor
 
 		// Clamp zoom between reasonable limits
-		if c.Zoom < 0.1 {
-			c.Zoom = 0.1
-		} else if c.Zoom > 10.0 {
-			c.Zoom = 10.0
+		if c.Zoom < 0.5 {
+			c.Zoom = 0.5
+		} else if c.Zoom > 2.5 {
+			c.Zoom = 2.5
 		}
 	}
 
