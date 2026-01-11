@@ -10,6 +10,8 @@ Communication isn't free. It costs energy. It's heritable. And it shapes surviva
 
 Watch as populations develop emergent strategies across generations: Will creatures evolve to share information altruistically? Will cheaters emerge who listen but never tell? What survives when cooperation competes with self-interest?
 
+
+
 ## Status
 
 Early development. Currently implementing core simulation systems.

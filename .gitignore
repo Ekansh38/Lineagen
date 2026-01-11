@@ -24,3 +24,7 @@ Thumbs.db
 
 # Claude Code specific
 CLAUDE.md
+
+# Terrain cache files
+terrain_cache.png
+terrain_cache.dat
