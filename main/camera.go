@@ -11,14 +11,16 @@ type Camera struct {
 	dragging bool
 	lastX    int
 	lastY    int
+	cfg      *Config // Configuration reference
 }
 
 // NewCamera creates a new camera centered at the given world position
-func NewCamera(x, y, zoom float64) *Camera {
+func NewCamera(x, y, zoom float64, cfg *Config) *Camera {
 	return &Camera{
 		X:    x,
 		Y:    y,
 		Zoom: zoom,
+		cfg:  cfg,
 	}
 }
 
@@ -34,7 +36,7 @@ func (c *Camera) GetTransform() ebiten.GeoM {
 	geo.Scale(c.Zoom, c.Zoom)
 
 	// 3. Translate to screen center
-	geo.Translate(float64(width)/2, float64(height)/2)
+	geo.Translate(float64(c.cfg.Window.Width)/2, float64(c.cfg.Window.Height)/2)
 
 	return geo
 }
@@ -42,15 +44,15 @@ func (c *Camera) GetTransform() ebiten.GeoM {
 // ScreenToWorld converts screen coordinates to world coordinates
 func (c *Camera) ScreenToWorld(screenX, screenY int) (float64, float64) {
 	// Inverse of GetTransform
-	worldX := (float64(screenX)-float64(width)/2)/c.Zoom + c.X
-	worldY := (float64(screenY)-float64(height)/2)/c.Zoom + c.Y
+	worldX := (float64(screenX)-float64(c.cfg.Window.Width)/2)/c.Zoom + c.X
+	worldY := (float64(screenY)-float64(c.cfg.Window.Height)/2)/c.Zoom + c.Y
 	return worldX, worldY
 }
 
 // WorldToScreen converts world coordinates to screen coordinates
 func (c *Camera) WorldToScreen(worldX, worldY float64) (int, int) {
-	screenX := (worldX-c.X)*c.Zoom + float64(width)/2
-	screenY := (worldY-c.Y)*c.Zoom + float64(height)/2
+	screenX := (worldX-c.X)*c.Zoom + float64(c.cfg.Window.Width)/2
+	screenY := (worldY-c.Y)*c.Zoom + float64(c.cfg.Window.Height)/2
 	return int(screenX), int(screenY)
 }
 
@@ -59,15 +61,15 @@ func (c *Camera) Update() {
 	// Mouse wheel zoom
 	_, scrollY := ebiten.Wheel()
 	if scrollY != 0 {
-		// Zoom in/out by 10% per scroll
-		zoomFactor := 1.0 + scrollY*0.05
+		// Zoom in/out based on config
+		zoomFactor := 1.0 + scrollY*c.cfg.Camera.ZoomFactor
 		c.Zoom *= zoomFactor
 
-		// Clamp zoom between reasonable limits
-		if c.Zoom < 0.5 {
-			c.Zoom = 0.5
-		} else if c.Zoom > 2.5 {
-			c.Zoom = 2.5
+		// Clamp zoom between configured limits
+		if c.Zoom < c.cfg.Camera.ZoomMin {
+			c.Zoom = c.cfg.Camera.ZoomMin
+		} else if c.Zoom > c.cfg.Camera.ZoomMax {
+			c.Zoom = c.cfg.Camera.ZoomMax
 		}
 	}
 
@@ -95,7 +97,7 @@ func (c *Camera) Update() {
 	}
 
 	// Keyboard panning (arrow keys) - alternative/additional control
-	panSpeed := 5.0 / c.Zoom // Pan speed inversely proportional to zoom
+	panSpeed := c.cfg.Camera.PanSpeed / c.Zoom // Pan speed inversely proportional to zoom
 	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
 		c.X -= panSpeed
 	}
@@ -111,8 +113,8 @@ func (c *Camera) Update() {
 
 	// Reset camera with 'R' key
 	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		c.X = float64(width) / 2
-		c.Y = float64(height) / 2
-		c.Zoom = 1.0
+		c.X = c.cfg.Camera.InitialX
+		c.Y = c.cfg.Camera.InitialY
+		c.Zoom = c.cfg.Camera.InitialZoom
 	}
 }

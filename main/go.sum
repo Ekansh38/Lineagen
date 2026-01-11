@@ -1,3 +1,5 @@
+github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
+github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/KEINOS/go-noise v0.1.0-rc1 h1:m+RkMef14cREgGekloxuZtHV+WSdT8PJ4b+qUFji6dI=
 github.com/KEINOS/go-noise v0.1.0-rc1/go.mod h1:9zpTu0QHAG0PPhMC9XcL18I9B+3V56rX0CqVmq9G40U=
 github.com/aquilax/go-perlin v1.1.0 h1:Gg+3jQ24wT4Y5GI7TCRLmYarzUG0k+n/JATFqOimb7s=

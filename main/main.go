@@ -16,6 +16,7 @@ type Game struct {
 	img         *ebiten.Image
 	terrain_map [][]float64
 	camera      *Camera
+	cfg         *Config
 }
 
 func (g *Game) Update() error {
@@ -31,10 +32,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return width, height
+	return g.cfg.Window.Width, g.cfg.Window.Height
 }
 
 func main() {
+	// Load configuration
+	cfg := MustLoadConfig("../config.toml")
+
 	var img *ebiten.Image
 	var terrain_map [][]float64
 
@@ -45,33 +49,37 @@ func main() {
 		img, terrain_map, err = loadTerrainCache()
 		if err != nil {
 			log.Printf("Failed to load cache: %v. Generating new terrain...", err)
-			terrain_map, img = generateAndCacheTerrain()
+			terrain_map, img = generateAndCacheTerrain(cfg)
 		}
 	} else {
 		log.Println("No cache found. Generating terrain...")
-		terrain_map, img = generateAndCacheTerrain()
+		terrain_map, img = generateAndCacheTerrain(cfg)
 	}
 
-	// Initialize camera centered on the world
-	// World is terrainResolution times larger than screen
-	//camera := NewCamera(float64(width*terrainResolution), float64(height*terrainResolution), 1.0)
-	camera := NewCamera(0, 0, 1.0)
+	// Initialize camera with config settings
+	camera := NewCamera(
+		cfg.Camera.InitialX,
+		cfg.Camera.InitialY,
+		cfg.Camera.InitialZoom,
+		cfg,
+	)
 
-	ebiten.SetWindowSize(width, height)
-	ebiten.SetWindowTitle("Lineagen!")
+	ebiten.SetWindowSize(cfg.Window.Width, cfg.Window.Height)
+	ebiten.SetWindowTitle(cfg.Window.Title)
 	if err := ebiten.RunGame(&Game{
 		img:         img,
 		terrain_map: terrain_map,
 		camera:      camera,
+		cfg:         cfg,
 	}); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // generateAndCacheTerrain generates new terrain and saves it to cache
-func generateAndCacheTerrain() ([][]float64, *ebiten.Image) {
-	terrain_map := generate_terrain()
-	rgba := createLandscapeImageRGBA(terrain_map)
+func generateAndCacheTerrain(cfg *Config) ([][]float64, *ebiten.Image) {
+	terrain_map := generate_terrain(cfg)
+	rgba := createLandscapeImageRGBA(terrain_map, cfg)
 
 	// Save to cache
 	if err := saveTerrainCache(rgba, terrain_map); err != nil {
@@ -82,27 +90,27 @@ func generateAndCacheTerrain() ([][]float64, *ebiten.Image) {
 	return terrain_map, ebiten.NewImageFromImage(rgba)
 }
 
-func createLandscapeImageRGBA(data [][]float64) *image.RGBA {
+func createLandscapeImageRGBA(data [][]float64, cfg *Config) *image.RGBA {
 	terrainHeight := len(data)
 	terrainWidth := len(data[0])
 
 	// Create image at full screen resolution
-	rgba := image.NewRGBA(image.Rect(0, 0, width, height))
+	rgba := image.NewRGBA(image.Rect(0, 0, cfg.Window.Width, cfg.Window.Height))
 
-	// Terrain color palette - techy and simple
-	deepWater := color.RGBA{20, 60, 140, 255}     // Dark blue - deep water
-	shallowWater := color.RGBA{40, 120, 200, 255} // Medium blue - shallow water
-	beach := color.RGBA{210, 200, 140, 255}       // Sandy tan - beach/shore
-	grass := color.RGBA{80, 180, 80, 255}         // Green - grassland (most common)
-	forest := color.RGBA{40, 120, 40, 255}        // Dark green - dense vegetation
-	dryLand := color.RGBA{160, 140, 100, 255}     // Brown/tan - dry rocky areas
+	// Terrain color palette from config
+	deepWater := cfg.Terrain.Colors.DeepWater.ToColor()
+	shallowWater := cfg.Terrain.Colors.ShallowWater.ToColor()
+	beach := cfg.Terrain.Colors.Beach.ToColor()
+	grass := cfg.Terrain.Colors.Grass.ToColor()
+	forest := cfg.Terrain.Colors.Forest.ToColor()
+	dryLand := cfg.Terrain.Colors.DryLand.ToColor()
 
-	// Terrain thresholds
-	deepWaterThreshold := 0.35
-	shallowWaterThreshold := 0.42
-	beachThreshold := 0.45
-	grassThreshold := 0.65
-	forestThreshold := 0.75
+	// Terrain thresholds from config
+	deepWaterThreshold := cfg.Terrain.Biomes.DeepWater
+	shallowWaterThreshold := cfg.Terrain.Biomes.ShallowWater
+	beachThreshold := cfg.Terrain.Biomes.Beach
+	grassThreshold := cfg.Terrain.Biomes.Grass
+	forestThreshold := cfg.Terrain.Biomes.Forest
 
 	// Scale up each terrain pixel
 	for ty := 0; ty < terrainHeight; ty++ {
@@ -126,10 +134,10 @@ func createLandscapeImageRGBA(data [][]float64) *image.RGBA {
 			}
 
 			// Draw this terrain pixel as a scale x scale block
-			for dy := 0; dy < scale; dy++ {
-				for dx := 0; dx < scale; dx++ {
-					screenX := tx*scale + dx
-					screenY := ty*scale + dy
+			for dy := 0; dy < cfg.Terrain.Scale; dy++ {
+				for dx := 0; dx < cfg.Terrain.Scale; dx++ {
+					screenX := tx*cfg.Terrain.Scale + dx
+					screenY := ty*cfg.Terrain.Scale + dy
 					rgba.Set(screenX, screenY, pixelColor)
 				}
 			}

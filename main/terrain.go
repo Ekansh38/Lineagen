@@ -6,14 +6,9 @@ import (
 	"github.com/KEINOS/go-noise"
 )
 
-const width = 2560
-const height = 1440
-const scale = 1
-const terrainResolution = 3
-
-func generate_terrain() [][]float64 {
-	terrainHeight := (height * terrainResolution) / scale
-	terrainWidth := (width * terrainResolution) / scale
+func generate_terrain(cfg *Config) [][]float64 {
+	terrainHeight := (cfg.Window.Height * cfg.Terrain.Resolution) / cfg.Terrain.Scale
+	terrainWidth := (cfg.Window.Width * cfg.Terrain.Resolution) / cfg.Terrain.Scale
 
 	terrain_map := make([][]float64, terrainHeight)
 
@@ -22,7 +17,7 @@ func generate_terrain() [][]float64 {
 	}
 	for y := 0; y < terrainHeight; y++ {
 		for x := 0; x < terrainWidth; x++ {
-			noise_value := generate_perlin_noise(float64(x), float64(y))
+			noise_value := generate_perlin_noise(float64(x), float64(y), cfg)
 			terrain_map[y][x] = (noise_value + 1) / 2
 		}
 	}
@@ -30,10 +25,9 @@ func generate_terrain() [][]float64 {
 	return terrain_map
 }
 
-func generate_perlin_noise(x float64, y float64) float64 {
-	const seed = 6767                                // noise pattern ID
-	const baseSmoothness = 140                       // base noise smoothness
-	smoothness := baseSmoothness * terrainResolution // scale smoothness to maintain feature size
+func generate_perlin_noise(x float64, y float64, cfg *Config) float64 {
+	seed := int64(cfg.Terrain.Noise.Seed)
+	smoothness := cfg.Terrain.Noise.BaseSmoothness * cfg.Terrain.Resolution
 
 	n, err := noise.New(noise.Perlin, seed)
 
@@ -41,8 +35,7 @@ func generate_perlin_noise(x float64, y float64) float64 {
 		fmt.Println("Error creating noise generator:", err)
 	}
 
-	v := n.Eval64(x/float64(smoothness), y/float64(smoothness)) // yy is between -1.0 and 1.0 of float64
+	v := n.Eval64(x/float64(smoothness), y/float64(smoothness))
 
 	return v
-
 }
