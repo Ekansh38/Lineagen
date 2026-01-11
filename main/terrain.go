@@ -6,55 +6,28 @@ import (
 	"github.com/KEINOS/go-noise"
 )
 
-func generate_terrain() [][]bool {
-	const width = 1280
-	const height = 720
+const width = 1280
+const height = 720
+const scale = 1
 
-	terrain_map := make([][]float64, height)
-	for i := range terrain_map {
-		terrain_map[i] = make([]float64, width)
+func generate_terrain() [][]float64 {
+	// Generate terrain at reduced resolution based on scale
+	scaledHeight := height / scale
+	scaledWidth := width / scale
+
+	terrain_map := make([][]float64, scaledHeight)
+
+	for i := range scaledHeight {
+		terrain_map[i] = make([]float64, scaledWidth)
 	}
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y < scaledHeight; y++ {
+		for x := 0; x < scaledWidth; x++ {
 			noise_value := generate_perlin_noise(float64(x), float64(y))
 			terrain_map[y][x] = (noise_value + 1) / 2
 		}
 	}
 
-	// convert to boolean map for land/water
-	land_water_map := make([][]bool, height)
-	for i := range land_water_map {
-		land_water_map[i] = make([]bool, width)
-	}
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			if terrain_map[y][x] < 0.4 {
-				land_water_map[y][x] = false // water
-			} else {
-				land_water_map[y][x] = true // land
-			}
-		}
-	}
-
-	// find number of true and false and print that.
-
-	true_count := 0
-	false_count := 0
-
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			if land_water_map[y][x] {
-				true_count++
-			} else {
-				false_count++
-			}
-		}
-	}
-
-	fmt.Println("Land count:", true_count)
-	fmt.Println("Water count:", false_count)
-
-	return land_water_map
+	return terrain_map
 }
 
 func generate_perlin_noise(x float64, y float64) float64 {
