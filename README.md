@@ -2,6 +2,8 @@
 
 A 2D genetic simulation where evolution meets communication.
 
+![World Map](main/terrain_cache.png)
+
 ## About
 
 Lineagen explores what happens when information becomes a survival resource. Creatures evolve not just physical traits like speed and eyesight, but also the ability to communicate—sharing knowledge about food, water, and predators with nearby members of their species.
